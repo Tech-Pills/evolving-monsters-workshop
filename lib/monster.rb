@@ -90,9 +90,9 @@ class Monster
   private
 
   def self.random_genome
-    buckets = Array.new(ATTRIBUTES.length, 0)
-    BUDGET.times { buckets[rand(ATTRIBUTES.length)] += 1 }
-    buckets
+    # Build a random genome: an array of integers (one per attribute) that sums to BUDGET
+    # Repeated calls should produce different distributions
+    # Hint: think of BUDGET as a pile of points to drop into random buckets
   end
 
   private_class_method :random_genome
