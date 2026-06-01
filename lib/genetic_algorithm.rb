@@ -21,7 +21,9 @@ class GeneticAlgorithm
   end
 
   def select(population)
-    population.monsters.sample(tournament_size).max_by(&:fitness)
+    # Tournament selection: grab `tournament_size` monsters at random and
+    # return the fittest one.
+    # Hint: Array#sample(n) draws n distinct elements.
   end
 
   def crossover(parent_a, parent_b)
@@ -37,17 +39,12 @@ class GeneticAlgorithm
   end
 
   def mutate(monster)
-    genome = monster.genome.dup
-    indices = (0...genome.length).to_a.sample(2)
-    increase_idx, decrease_idx = indices
-
-    delta = rand(1..10)
-    delta = [delta, genome[decrease_idx]].min
-
-    genome[increase_idx] += delta
-    genome[decrease_idx] -= delta
-
-    Monster.from_genome(genome)
+    # Swap mutation: pick two different attribute indices, then move some
+    # points from one to the other. The genome still sums to 100 because
+    # the gain on one side cancels the loss on the other — no normalization
+    # needed. Cap the transfer so the source slot can't go negative.
+    # Return a new Monster; leave the input alone.
+    # Hint: (0...genome.length).to_a.sample(2) gives two different indices.
   end
 
   def evolve(population, generations:, &fitness_fn)
@@ -116,25 +113,15 @@ class GeneticAlgorithm
   end
 
   def crossover_two_point(genome_a, genome_b)
-    points = (1...genome_a.length).to_a.sample(2).sort
-    cut1, cut2 = points
-    child1 = genome_a[0...cut1] + genome_b[cut1...cut2] + genome_a[cut2..]
-    child2 = genome_b[0...cut1] + genome_a[cut1...cut2] + genome_b[cut2..]
-    [child1, child2]
+    # Two random cut positions, sorted. Swap the middle slice — child1 ends
+    # up with A's outer regions and B's middle; child2 is the opposite.
+    # Return [child1, child2] as raw arrays.
+    # Hint: (1...genome_a.length).to_a.sample(2).sort gets two ordered cuts.
   end
 
   def crossover_uniform(genome_a, genome_b)
-    child1 = []
-    child2 = []
-    genome_a.zip(genome_b).each do |gene_a, gene_b|
-      if rand < 0.5
-        child1 << gene_a
-        child2 << gene_b
-      else
-        child1 << gene_b
-        child2 << gene_a
-      end
-    end
-    [child1, child2]
+    # For each gene position, flip a coin. Heads, child1 takes A's gene and
+    # child2 takes B's. Tails, swap. Return [child1, child2] as raw arrays.
+    # Hint: genome_a.zip(genome_b) walks both genomes in parallel.
   end
 end
