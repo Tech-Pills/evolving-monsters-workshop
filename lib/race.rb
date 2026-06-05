@@ -40,33 +40,26 @@ class Race
   private
 
   def score_all_monsters
-    monsters.each_with_index.map do |monster, index|
-      stage_scores = STAGES.map { |stage| score_stage(monster, stage) }
-      {
-        monster: monster,
-        index: index,
-        stage_scores: stage_scores,
-        total_score: stage_scores.sum
-      }
-    end
+    # Build one record per monster: { monster:, index:, stage_scores:, total_score: }.
+    # Keep the original `index`. assign_fitness_by_rank uses it as a tiebreaker
+    # when two monsters tie on total score.
+    # Hint: monsters.each_with_index.map yields (monster, index) per iteration.
   end
 
   def rank_by_total_score(scored)
-    scored.sort_by { |entry| [-entry[:total_score], entry[:index]] }
+    # Sort entries with the highest total_score first. Break ties using the
+    # original index so the same inputs always rank the same way.
+    # Hint: sort_by returns ascending order. To sort descending on a
+    # numeric key, pass [-value, ...] as the sort key.
   end
 
   # Linear Ranking
   def assign_fitness_by_rank(ranked)
-    ranked.each_with_index.map do |entry, rank|
-      placement = rank + 1
-      entry[:monster].fitness = monsters.length - placement + 1
-      {
-        monster: entry[:monster],
-        stage_scores: entry[:stage_scores],
-        total_score: entry[:total_score],
-        placement: placement
-      }
-    end
+    # `ranked` is sorted best-first. Set each monster.fitness based on
+    # placement: 1st gets `monsters.length`, last gets 1. That side-effect
+    # is what plugs Race into GA#evolve. Return result hashes with keys
+    # monster, stage_scores, total_score, placement.
+    # Hint: each_with_index gives 0-based rank; placement = rank + 1.
   end
 
   def score_stage(monster, stage)
