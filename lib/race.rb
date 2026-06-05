@@ -27,7 +27,20 @@ class Race
   end
 
   def run
-    scored = monsters.each_with_index.map do |monster, index|
+    scored = score_all_monsters
+    ranked = rank_by_total_score(scored)
+    @results = assign_fitness_by_rank(ranked)
+    self
+  end
+
+  def self.call(monsters, random: Random.new)
+    new(monsters, random: random).run
+  end
+
+  private
+
+  def score_all_monsters
+    monsters.each_with_index.map do |monster, index|
       stage_scores = STAGES.map { |stage| score_stage(monster, stage) }
       {
         monster: monster,
@@ -36,10 +49,14 @@ class Race
         total_score: stage_scores.sum
       }
     end
+  end
 
-    ranked = scored.sort_by { |entry| [-entry[:total_score], entry[:index]] }
+  def rank_by_total_score(scored)
+    scored.sort_by { |entry| [-entry[:total_score], entry[:index]] }
+  end
 
-    @results = ranked.each_with_index.map do |entry, rank|
+  def assign_fitness_by_rank(ranked)
+    ranked.each_with_index.map do |entry, rank|
       placement = rank + 1
       entry[:monster].fitness = monsters.length - placement + 1
       {
@@ -49,15 +66,7 @@ class Race
         placement: placement
       }
     end
-
-    self
   end
-
-  def self.call(monsters, random: Random.new)
-    new(monsters, random: random).run
-  end
-
-  private
 
   def score_stage(monster, stage)
     attrs = monster.to_h
