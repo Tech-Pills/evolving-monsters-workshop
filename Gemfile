@@ -6,6 +6,7 @@ ruby '>= 3.4'
 
 # LLM
 gem 'anthropic'
+gem 'base64'
 
 # Terminal UI
 gem 'pastel'
