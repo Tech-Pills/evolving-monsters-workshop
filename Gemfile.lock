@@ -5,6 +5,7 @@ GEM
       cgi
       connection_pool
     ast (2.4.3)
+    base64 (0.3.0)
     cgi (0.5.1)
     connection_pool (3.0.2)
     date (3.5.1)
@@ -106,6 +107,7 @@ PLATFORMS
 
 DEPENDENCIES
   anthropic
+  base64
   irb
   minitest
   pastel
