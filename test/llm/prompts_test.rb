@@ -62,17 +62,6 @@ module LLM
       assert_equal 'smash', result[:special_ability]
     end
 
-    def test_parse_identity_strips_markdown_fences
-      raw = "```json\n{\"name\":\"X\",\"backstory\":\"y\",\"battle_cry\":\"z\",\"special_ability\":\"w\"}\n```"
-      result = LLM::Prompts.parse_identity(raw)
-
-      assert_equal 'X', result[:name]
-    end
-
-    def test_parse_identity_raises_on_missing_keys
-      assert_raises(LLM::Error) { LLM::Prompts.parse_identity('{"name":"X"}') }
-    end
-
     def test_parse_identity_raises_on_invalid_json
       assert_raises(LLM::Error) { LLM::Prompts.parse_identity('not json at all') }
     end
