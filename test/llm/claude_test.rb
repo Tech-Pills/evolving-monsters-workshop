@@ -53,6 +53,30 @@ module LLM
       assert_match(/40/, params[:messages].first[:content])
     end
 
+    def test_generate_identity_sends_json_schema_output_config
+      json = '{"name":"Ironclad","backstory":"a tale","battle_cry":"rawr","special_ability":"smash"}'
+      fake = FakeAnthropicClient.new(json)
+      adapter = LLM::Claude.new(client: fake)
+
+      adapter.generate_identity(@monster)
+      output_config = fake.messages.last_params[:output_config]
+
+      assert_kind_of Hash, output_config
+      assert_equal 'json_schema', output_config[:format][:type]
+      assert_equal LLM::Prompts::IDENTITY_SCHEMA, output_config[:format][:schema]
+    end
+
+    def test_commentate_race_omits_output_config
+      fake = FakeAnthropicClient.new('What a thrilling finish!')
+      adapter = LLM::Claude.new(client: fake)
+      results = Race.call(Array.new(3) { Monster.random }).results
+
+      adapter.commentate_race(results)
+
+      refute fake.messages.last_params.key?(:output_config),
+             'Free-form text calls should not constrain output format'
+    end
+
     def test_commentate_race_returns_text_content
       fake = FakeAnthropicClient.new('What a thrilling finish!')
       adapter = LLM::Claude.new(client: fake)
