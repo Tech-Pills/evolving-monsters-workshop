@@ -43,13 +43,10 @@ module LLM
     end
 
     def generate_identity(monster)
-      dom = monster.dominant_attribute
-      {
-        name: "#{ADJECTIVES.sample(random: @random)} #{NOUNS.sample(random: @random)}",
-        backstory: BACKSTORIES.sample(random: @random),
-        battle_cry: BATTLE_CRIES.sample(random: @random),
-        special_ability: ABILITIES.fetch(dom).sample(random: @random)
-      }
+      # Return a hash with name, backstory, battle_cry, special_ability. That's the
+      # shape every adapter returns. Bias special_ability toward the monster's
+      # dominant attribute so the offline picks still feel tied to the stats.
+      # Hint: Array#sample(random: @random) keeps draws deterministic in tests.
     end
 
     def commentate_race(race_results)

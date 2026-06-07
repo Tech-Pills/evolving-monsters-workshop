@@ -30,25 +30,8 @@ module LLM
     module_function
 
     def identity_user(monster)
-      <<~PROMPT.strip
-        Generate an identity for this monster. Respond with JSON only.
-
-        Stats (sum to 100):
-          speed: #{monster.speed}
-          strength: #{monster.strength}
-          stamina: #{monster.stamina}
-          intelligence: #{monster.intelligence}
-          luck: #{monster.luck}
-        Dominant attribute: #{monster.dominant_attribute}
-
-        JSON schema:
-        {
-          "name": "<2-4 word fantasy name>",
-          "backstory": "<one-sentence origin story>",
-          "battle_cry": "<one short line>",
-          "special_ability": "<2-4 word ability tied to the dominant attribute>"
-        }
-      PROMPT
+      # Build a heredoc prompt with the monster's five stats and its dominant attribute.
+      # Hint: <<~PROMPT.strip lets you indent freely; #{...} interpolates.
     end
 
     def commentary_user(race_results)
