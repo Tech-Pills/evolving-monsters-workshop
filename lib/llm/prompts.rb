@@ -8,12 +8,24 @@ module LLM
     SYSTEM = <<~PROMPT.strip
       You are a creative fantasy game narrator for a monster-racing arena.
       Generate vivid, fun, slightly mythic monster identities and play-by-play.
-      When asked for an identity, respond with VALID JSON ONLY (no prose, no
-      markdown code fences) matching the schema given in the user message.
+      When asked for an identity, respond with VALID JSON ONLY matching the
+      requested schema (no prose, no markdown code fences).
       For commentary and narration, respond in 2-4 short sentences of plain text.
     PROMPT
 
     REQUIRED_IDENTITY_KEYS = %i[name backstory battle_cry special_ability].freeze
+
+    IDENTITY_SCHEMA = {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        backstory: { type: 'string' },
+        battle_cry: { type: 'string' },
+        special_ability: { type: 'string' }
+      },
+      required: REQUIRED_IDENTITY_KEYS.map(&:to_s),
+      additionalProperties: false
+    }.freeze
 
     module_function
 

@@ -16,7 +16,11 @@ module LLM
     end
 
     def generate_identity(monster)
-      raw = call(LLM::Prompts.identity_user(monster), max_tokens: IDENTITY_MAX_TOKENS)
+      raw = call(
+        LLM::Prompts.identity_user(monster),
+        max_tokens: IDENTITY_MAX_TOKENS,
+        output_config: { format: { type: 'json_schema', schema: LLM::Prompts::IDENTITY_SCHEMA } }
+      )
       LLM::Prompts.parse_identity(raw)
     end
 
@@ -30,13 +34,16 @@ module LLM
 
     private
 
-    def call(user_content, max_tokens:)
-      message = @client.messages.create(
+    def call(user_content, max_tokens:, output_config: nil)
+      params = {
         model: @model,
         max_tokens: max_tokens,
         system_: LLM::Prompts::SYSTEM,
         messages: [{ role: 'user', content: user_content }]
-      )
+      }
+      params[:output_config] = output_config if output_config
+
+      message = @client.messages.create(**params)
       extract_text(message)
     rescue LLM::Error
       raise
