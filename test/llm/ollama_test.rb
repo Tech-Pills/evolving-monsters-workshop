@@ -42,12 +42,12 @@ module LLM
       assert_equal 11_434, call[:uri].port
       assert_equal 'llama3.2', call[:payload][:model]
       refute call[:payload][:stream]
-      assert_equal 'json', call[:payload][:format]
+      assert_equal LLM::Prompts::IDENTITY_SCHEMA, call[:payload][:format]
       assert_equal LLM::Prompts::SYSTEM, call[:payload][:system]
       assert_match(/35/, call[:payload][:prompt])
     end
 
-    def test_commentate_race_omits_format_json
+    def test_commentate_race_omits_format
       transport = RecordingTransport.new('response' => 'wow what a race')
       adapter = LLM::Ollama.new(transport: transport)
       results = Race.call(Array.new(3) { Monster.random }).results
@@ -56,7 +56,7 @@ module LLM
 
       assert_equal 'wow what a race', text
       refute transport.calls.first[:payload].key?(:format),
-             'Free-form text calls should not pass format: json'
+             'Free-form text calls should not constrain output format'
     end
 
     def test_narrate_evolution_returns_text
