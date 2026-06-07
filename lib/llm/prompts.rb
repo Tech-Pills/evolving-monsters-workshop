@@ -80,19 +80,10 @@ module LLM
     end
 
     def parse_identity(raw)
-      json = strip_fences(raw)
-      data = JSON.parse(json)
-      missing = REQUIRED_IDENTITY_KEYS.reject { |k| data.key?(k.to_s) }
-      raise LLM::Error, "identity JSON missing keys: #{missing.join(', ')}" unless missing.empty?
-
+      data = JSON.parse(raw)
       REQUIRED_IDENTITY_KEYS.to_h { |k| [k, data.fetch(k.to_s).to_s] }
     rescue JSON::ParserError => e
       raise LLM::Error, "identity JSON parse failed: #{e.message}"
     end
-
-    def strip_fences(raw)
-      raw.to_s.strip.sub(/\A```(?:json)?\s*/, '').sub(/\s*```\z/, '')
-    end
-    private_class_method :strip_fences
   end
 end
