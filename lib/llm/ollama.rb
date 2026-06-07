@@ -27,7 +27,7 @@ module LLM
     end
 
     def generate_identity(monster)
-      raw = call(LLM::Prompts.identity_user(monster), format: 'json')
+      raw = call(LLM::Prompts.identity_user(monster), format: LLM::Prompts::IDENTITY_SCHEMA)
       LLM::Prompts.parse_identity(raw)
     end
 
