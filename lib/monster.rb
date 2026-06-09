@@ -16,8 +16,8 @@ class Monster
     @fitness = 0
   end
 
-  def self.random
-    genome = random_genome
+  def self.random(random: Random.new)
+    genome = random_genome(random: random)
     from_genome(genome)
   end
 
@@ -92,7 +92,7 @@ class Monster
   # Simple Random Partition
   def self.random_genome
     buckets = Array.new(ATTRIBUTES.length, 0)
-    BUDGET.times { buckets[rand(ATTRIBUTES.length)] += 1 }
+    BUDGET.times { buckets[random.rand(ATTRIBUTES.length)] += 1 }
     buckets
   end
 
