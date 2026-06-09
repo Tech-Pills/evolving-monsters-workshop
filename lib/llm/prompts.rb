@@ -71,9 +71,15 @@ module LLM
       first_avgs = first[:attribute_averages]
       last_avgs = last[:attribute_averages]
       drift = first_avgs.keys.map { |k| "#{k}: #{first_avgs[k].round(1)} -> #{last_avgs[k].round(1)}" }.join(', ')
+
+      diversity_line = ''
+      if first[:diversity] && last[:diversity]
+        diversity_line = "\nGenome diversity drift: #{first[:diversity].round(2)} -> #{last[:diversity].round(2)}."
+      end
+
       <<~PROMPT.strip
         A monster population evolved across #{last[:generation] - first[:generation]} generations.
-        Attribute averages drift: #{drift}.
+        Attribute averages drift: #{drift}.#{diversity_line}
 
         In 2-3 sentences, narrate the population's evolutionary arc.
       PROMPT

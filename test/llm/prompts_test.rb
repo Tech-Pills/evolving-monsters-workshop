@@ -52,6 +52,34 @@ module LLM
       assert_match(/speed|stamina|strength|intelligence|luck/i, prompt)
     end
 
+    def test_evolution_prompt_mentions_diversity_when_present
+      history = [
+        { generation: 0, best_fitness: 5, avg_fitness: 3.0,
+          attribute_averages: { speed: 20, strength: 20, stamina: 20, intelligence: 20, luck: 20 },
+          diversity: 42.5 },
+        { generation: 5, best_fitness: 8, avg_fitness: 5.0,
+          attribute_averages: { speed: 25, strength: 22, stamina: 18, intelligence: 19, luck: 16 },
+          diversity: 11.0 }
+      ]
+      prompt = LLM::Prompts.evolution_user(history)
+
+      assert_match(/diversity/i, prompt)
+      assert_match(/42\.5/, prompt)
+      assert_match(/11\.0/, prompt)
+    end
+
+    def test_evolution_prompt_omits_diversity_when_absent
+      history = [
+        { generation: 0, best_fitness: 5, avg_fitness: 3.0,
+          attribute_averages: { speed: 20, strength: 20, stamina: 20, intelligence: 20, luck: 20 } },
+        { generation: 5, best_fitness: 8, avg_fitness: 5.0,
+          attribute_averages: { speed: 25, strength: 22, stamina: 18, intelligence: 19, luck: 16 } }
+      ]
+      prompt = LLM::Prompts.evolution_user(history)
+
+      refute_match(/diversity/i, prompt)
+    end
+
     def test_parse_identity_returns_required_string_fields
       raw = '{"name":"Ironclad","backstory":"a tale","battle_cry":"rawr","special_ability":"smash"}'
       result = LLM::Prompts.parse_identity(raw)
