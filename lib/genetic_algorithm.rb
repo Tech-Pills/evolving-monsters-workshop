@@ -55,7 +55,7 @@ class GeneticAlgorithm
     Monster.from_genome(genome)
   end
 
-  def evolve(population, generations:, &fitness_fn)
+  def evolve(population, generations:, on_generation: nil, &fitness_fn)
     raise ArgumentError, 'must pass a fitness block' unless fitness_fn
 
     fitness_fn.call(population.monsters)
@@ -84,6 +84,7 @@ class GeneticAlgorithm
       new_monsters = elites + new_monsters.first(population.size - elitism)
       fitness_fn.call(new_monsters)
       population.replace(new_monsters)
+      on_generation&.call(population.history.last)
     end
 
     population
