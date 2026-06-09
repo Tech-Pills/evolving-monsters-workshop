@@ -86,3 +86,13 @@ bundle exec ruby -Ilib -r llm/ollama -r monster -e '
 ```
 
 First call takes 30–60s while the model loads into RAM. After that it's quick.
+
+## Running the full evolution (Phase 5)
+
+`bin/evolve` is the Phase 5 entry point. It drops into an interactive menu by default, or accepts flags for headless runs.
+
+```bash
+./bin/evolve                                                       # interactive menu
+./bin/evolve --llm null --population 8 --generations 5 --seed 42   # headless, reproducible
+./bin/evolve --help                                                # full flag list
+```
