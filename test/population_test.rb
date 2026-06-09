@@ -147,6 +147,38 @@ class PopulationTest < Minitest::Test
     assert snapshot[:attribute_averages].key?(:luck)
   end
 
+  def test_genome_diversity_is_zero_for_clones
+    pop = Population.new(size: 4)
+    clone = Monster.new(speed: 40, strength: 20, stamina: 20, intelligence: 10, luck: 10)
+    pop.instance_variable_set(:@monsters, Array.new(4) { Monster.from_genome(clone.genome) })
+
+    assert_in_delta(0.0, pop.genome_diversity)
+  end
+
+  def test_genome_diversity_is_positive_for_spread_population
+    pop = Population.new(size: 2)
+    pop.instance_variable_set(:@monsters, [
+                                Monster.new(speed: 100, strength: 0, stamina: 0, intelligence: 0, luck: 0),
+                                Monster.new(speed: 0, strength: 100, stamina: 0, intelligence: 0, luck: 0)
+                              ])
+
+    assert_operator pop.genome_diversity, :>, 0.0
+  end
+
+  def test_genome_diversity_is_zero_for_single_monster
+    pop = Population.new(size: 1)
+
+    assert_in_delta(0.0, pop.genome_diversity)
+  end
+
+  def test_snapshot_includes_diversity_key
+    pop = Population.new(size: 3)
+    pop.record_snapshot
+
+    assert pop.history[0].key?(:diversity)
+    assert_kind_of Float, pop.history[0][:diversity]
+  end
+
   def test_history_starts_empty
     pop = Population.new(size: 5)
 
