@@ -6,22 +6,25 @@ require_relative 'population'
 class GeneticAlgorithm
   CROSSOVER_STRATEGIES = %i[single_point two_point uniform].freeze
 
-  attr_reader :population_size, :tournament_size, :crossover_rate, :mutation_rate, :crossover_strategy, :elitism
+  attr_reader :population_size, :tournament_size, :crossover_rate, :mutation_rate, :crossover_strategy, :elitism,
+              :random
 
-  def initialize(population_size: 20, tournament_size: 3, crossover_rate: 0.7, mutation_rate: 0.05,
-                 crossover_strategy: :single_point, elitism: 2)
+  def initialize(population_size: 20, tournament_size: 3, crossover_rate: 0.7,
+                 mutation_rate: 0.05, crossover_strategy: :single_point, elitism: 2,
+                 random: Random.new)
     @population_size = population_size
     @tournament_size = tournament_size
     @crossover_rate = crossover_rate
     @mutation_rate = mutation_rate
     @crossover_strategy = crossover_strategy
     @elitism = elitism
+    @random = random
 
     validate_params!
   end
 
   def select(population)
-    population.monsters.sample(tournament_size).max_by(&:fitness)
+    population.monsters.sample(tournament_size, random: random).max_by(&:fitness)
   end
 
   def crossover(parent_a, parent_b)
@@ -38,10 +41,10 @@ class GeneticAlgorithm
 
   def mutate(monster)
     genome = monster.genome.dup
-    indices = (0...genome.length).to_a.sample(2)
+    indices = (0...genome.length).to_a.sample(2, random: random)
     increase_idx, decrease_idx = indices
 
-    delta = rand(1..10)
+    delta = random.rand(1..10)
     delta = [delta, genome[decrease_idx]].min
 
     genome[increase_idx] += delta
@@ -50,7 +53,7 @@ class GeneticAlgorithm
     Monster.from_genome(genome)
   end
 
-  def evolve(population, generations:, &fitness_fn)
+  def evolve(population, generations:, on_generation: nil, &fitness_fn)
     raise ArgumentError, 'must pass a fitness block' unless fitness_fn
 
     fitness_fn.call(population.monsters)
@@ -63,7 +66,7 @@ class GeneticAlgorithm
       while new_monsters.size < population.size - elitism
         parent_a = select(population)
 
-        children = if rand < crossover_rate
+        children = if random.rand < crossover_rate
                      parent_b = select(population)
                      crossover(parent_a, parent_b)
                    else
@@ -71,7 +74,7 @@ class GeneticAlgorithm
                    end
 
         children.each do |child|
-          child = mutate(child) if rand < mutation_rate
+          child = mutate(child) if random.rand < mutation_rate
           new_monsters << child
         end
       end
@@ -79,6 +82,7 @@ class GeneticAlgorithm
       new_monsters = elites + new_monsters.first(population.size - elitism)
       fitness_fn.call(new_monsters)
       population.replace(new_monsters)
+      on_generation&.call(population.history.last)
     end
 
     population
@@ -109,14 +113,14 @@ class GeneticAlgorithm
   end
 
   def crossover_single_point(genome_a, genome_b)
-    cut = rand(1...genome_a.length)
+    cut = random.rand(1...genome_a.length)
     child1 = genome_a[0...cut] + genome_b[cut..]
     child2 = genome_b[0...cut] + genome_a[cut..]
     [child1, child2]
   end
 
   def crossover_two_point(genome_a, genome_b)
-    points = (1...genome_a.length).to_a.sample(2).sort
+    points = (1...genome_a.length).to_a.sample(2, random: random).sort
     cut1, cut2 = points
     child1 = genome_a[0...cut1] + genome_b[cut1...cut2] + genome_a[cut2..]
     child2 = genome_b[0...cut1] + genome_a[cut1...cut2] + genome_b[cut2..]
@@ -127,7 +131,7 @@ class GeneticAlgorithm
     child1 = []
     child2 = []
     genome_a.zip(genome_b).each do |gene_a, gene_b|
-      if rand < 0.5
+      if random.rand < 0.5
         child1 << gene_a
         child2 << gene_b
       else

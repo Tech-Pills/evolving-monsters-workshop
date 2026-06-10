@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Phase 5 entry point: end-to-end evolution run with TTY visualization,
+# LLM-generated identities, optional per-generation race commentary, and
+# emergence analytics over the population's history.
+#
+# Usage:
+#   ./bin/evolve                              # interactive menu (uses defaults)
+#   ./bin/evolve --population 12 --generations 10 --crossover uniform
+#   ./bin/evolve --llm null --seed 42         # offline + reproducible
+#   ./bin/evolve --narrate-every 3            # mid-run race commentary every 3 gens
+#   ./bin/evolve -h                           # full flag list
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+require 'cli'
+require 'tty-prompt'
+
+prompt = TTY::Prompt.new
+config = CLI::Config.parse(ARGV, prompt: prompt)
+
+CLI::Runner.new(config: config).call
