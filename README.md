@@ -96,3 +96,7 @@ First call takes 30–60s while the model loads into RAM. After that it's quick.
 ./bin/evolve --llm null --population 8 --generations 5 --seed 42   # headless, reproducible
 ./bin/evolve --help                                                # full flag list
 ```
+
+## Experiments
+
+See [`docs/phase-5-experiments.md`](docs/phase-5-experiments.md) for seven parameter experiments to play with. Each is 3-5 minutes: change a flag, watch what happens.
