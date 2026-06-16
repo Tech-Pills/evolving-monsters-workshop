@@ -40,17 +40,19 @@ class Race
   private
 
   def score_all_monsters
-    # Build one record per monster: { monster:, index:, stage_scores:, total_score: }.
-    # Keep the original `index`. assign_fitness_by_rank uses it as a tiebreaker
-    # when two monsters tie on total score.
-    # Hint: monsters.each_with_index.map yields (monster, index) per iteration.
+    monsters.each_with_index.map do |monster, index|
+      stage_scores = STAGES.map { |stage| score_stage(monster, stage) }
+      {
+        monster: monster,
+        index: index,
+        stage_scores: stage_scores,
+        total_score: stage_scores.sum
+      }
+    end
   end
 
   def rank_by_total_score(scored)
-    # Sort entries with the highest total_score first. Break ties using the
-    # original index so the same inputs always rank the same way.
-    # Hint: sort_by returns ascending order. To sort descending on a
-    # numeric key, pass [-value, ...] as the sort key.
+    scored.sort_by { |entry| [-entry[:total_score], entry[:index]] }
   end
 
   # Linear Ranking
