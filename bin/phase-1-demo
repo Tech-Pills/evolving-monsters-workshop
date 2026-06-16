@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Phase 1 demo: see Monster and Population in the console.
+# Run with: ./bin/phase-1-demo
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+require 'monster'
+require 'population'
+
+def header(title)
+  puts
+  puts "── #{title} #{'─' * (60 - title.length)}"
+  puts
+end
+
+# 1. One random monster ----------------------------------------------------
+header '1. A random monster'
+
+monster = Monster.random
+monster.name = 'Demo Monster'
+puts monster
+puts "  genome sum: #{monster.genome.sum} (budget is #{Monster::BUDGET})"
+puts "  dominant:   #{monster.dominant_attribute}"
+
+# 2. Five monsters side by side --------------------------------------------
+header '2. Five random monsters'
+
+5.times do |i|
+  m = Monster.random
+  attrs = m.to_h.map { |k, v| "#{k.to_s[0, 3]}=#{v.to_s.rjust(2)}" }.join('  ')
+  puts "  ##{i + 1}  #{attrs}  → dominant: #{m.dominant_attribute}"
+end
+
+# 3. Population stats ------------------------------------------------------
+header '3. Population of 20: attribute averages'
+
+pop = Population.new(size: 20)
+
+pop.attribute_averages.each do |attr, avg|
+  puts "  #{attr.to_s.ljust(14)} #{avg.round(2)}"
+end
+
+puts
+puts '  dominant attribute distribution:'
+counts = pop.monsters.group_by(&:dominant_attribute).transform_values(&:size)
+Monster::ATTRIBUTES.each do |attr|
+  puts "    #{attr.to_s.ljust(14)} #{counts.fetch(attr, 0)}"
+end
+
+# 4. Normalization in action -----------------------------------------------
+header '4. Normalization: budget is enforced'
+
+[
+  [150, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1],
+  [10, 20, 30, 40, 50]
+].each do |genome|
+  normalized = Monster.normalize_genome(genome)
+  puts "  input:  #{genome.inspect.ljust(24)} sum=#{genome.sum}"
+  puts "  output: #{normalized.inspect.ljust(24)} sum=#{normalized.sum}"
+  puts
+end
