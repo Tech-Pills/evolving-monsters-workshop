@@ -55,6 +55,7 @@ class Race
     scored.sort_by { |entry| [-entry[:total_score], entry[:index]] }
   end
 
+  # Linear Ranking
   def assign_fitness_by_rank(ranked)
     ranked.each_with_index.map do |entry, rank|
       placement = rank + 1
