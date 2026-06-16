@@ -1,0 +1,160 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Phase 2 demo: see GeneticAlgorithm operations in the console.
+# Run with: ./bin/phase-2-demo
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+require 'monster'
+require 'population'
+require 'genetic_algorithm'
+
+def header(title)
+  puts
+  puts "── #{title} #{'─' * [60 - title.length, 3].max}"
+  puts
+end
+
+def slice_view(genome, *cuts)
+  parts = []
+  prev = 0
+  cuts.each { |c| parts << genome[prev...c].join(', '); prev = c }
+  parts << genome[prev..].join(', ')
+  "[#{parts.join(' | ')}]"
+end
+
+ga = GeneticAlgorithm.new(tournament_size: 3, crossover_rate: 0.7, mutation_rate: 0.1)
+
+# 1. Tournament selection --------------------------------------------------
+header '1. Tournament selection (biases toward fitness, not deterministic)'
+
+pop = Population.new(size: 6)
+pop.monsters.each_with_index { |m, i| m.fitness = (i + 1) * 10 }
+
+puts '  population (assigned fitness):'
+pop.monsters.each { |m| puts "    fitness=#{m.fitness.to_s.rjust(3)}  genome=#{m.genome.inspect}" }
+
+picks = Hash.new(0)
+50.times { picks[ga.select(pop).fitness] += 1 }
+
+puts
+puts '  picks across 50 tournaments:'
+pop.monsters.map(&:fitness).sort.reverse.each do |fit|
+  n = picks[fit]
+  puts "    fitness=#{fit.to_s.rjust(3)}  picked #{n.to_s.rjust(2)} times  #{'█' * n}"
+end
+
+# 2. Three crossover strategies --------------------------------------------
+header '2. Crossover: same parents, three strategies'
+
+parent_a = Monster.from_genome([40, 30, 15, 10, 5])
+parent_b = Monster.from_genome([5, 10, 15, 30, 40])
+
+puts "  parent A: #{parent_a.genome.inspect}  (Sprinter)"
+puts "  parent B: #{parent_b.genome.inspect}  (Trickster)"
+puts
+
+a = parent_a.genome
+b = parent_b.genome
+
+# single_point: one cut, swap everything from the cut onward
+cut = 2
+raw1 = a[0...cut] + b[cut..]
+raw2 = b[0...cut] + a[cut..]
+puts "  single_point  (cut at index #{cut})"
+puts "    parent A:    #{slice_view(a, cut)}"
+puts "    parent B:    #{slice_view(b, cut)}"
+puts "    raw child 1: #{slice_view(raw1, cut).ljust(28)}  sum=#{raw1.sum}"
+puts "    raw child 2: #{slice_view(raw2, cut).ljust(28)}  sum=#{raw2.sum}"
+puts "    normalized:  #{Monster.normalize_genome(raw1).inspect.ljust(28)}  sum=100"
+puts "                 #{Monster.normalize_genome(raw2).inspect.ljust(28)}  sum=100"
+puts
+
+# two_point: two cuts, swap only the middle slice
+cut1, cut2 = 1, 4
+raw1 = a[0...cut1] + b[cut1...cut2] + a[cut2..]
+raw2 = b[0...cut1] + a[cut1...cut2] + b[cut2..]
+puts "  two_point  (cuts at indexes #{cut1} and #{cut2}, middle slice swapped)"
+puts "    parent A:    #{slice_view(a, cut1, cut2)}"
+puts "    parent B:    #{slice_view(b, cut1, cut2)}"
+puts "    raw child 1: #{slice_view(raw1, cut1, cut2).ljust(28)}  sum=#{raw1.sum}"
+puts "    raw child 2: #{slice_view(raw2, cut1, cut2).ljust(28)}  sum=#{raw2.sum}"
+puts "    normalized:  #{Monster.normalize_genome(raw1).inspect.ljust(28)}  sum=100"
+puts "                 #{Monster.normalize_genome(raw2).inspect.ljust(28)}  sum=100"
+puts
+
+# uniform: per-position coin flip, no cuts (using a fixed mask for clarity)
+mask = [true, false, false, true, false]  # ABBAB
+raw1 = mask.each_with_index.map { |from_a, i| from_a ? a[i] : b[i] }
+raw2 = mask.each_with_index.map { |from_a, i| from_a ? b[i] : a[i] }
+pattern = mask.map { |from_a| from_a ? 'A' : 'B' }.join
+puts "  uniform  (per-position coin flip; no cuts)"
+puts "    child 1 pattern: #{pattern}  (which parent each gene came from)"
+puts "    raw child 1: #{raw1.inspect.ljust(28)}  sum=#{raw1.sum}"
+puts "    raw child 2: #{raw2.inspect.ljust(28)}  sum=#{raw2.sum}"
+puts "    normalized:  #{Monster.normalize_genome(raw1).inspect.ljust(28)}  sum=100"
+puts "                 #{Monster.normalize_genome(raw2).inspect.ljust(28)}  sum=100"
+
+# 3. Mutation --------------------------------------------------------------
+header '3. Mutation: budget stays at 100'
+
+monster = Monster.from_genome([20, 20, 20, 20, 20])
+puts "  start:  #{monster.genome.inspect}  sum=#{monster.genome.sum}"
+
+3.times do |i|
+  before = monster.genome
+  monster = ga.mutate(monster)
+  after = monster.genome
+  diff = after.zip(before).map { |a, b| a - b }
+
+  if diff.all?(&:zero?)
+    puts "  step #{i + 1}: #{after.inspect}  sum=#{after.sum}  (no-op: decrease slot was 0)"
+  else
+    inc_idx = diff.index { |d| d.positive? }
+    dec_idx = diff.index { |d| d.negative? }
+    delta = diff[inc_idx]
+    puts "  step #{i + 1}: #{after.inspect}  sum=#{after.sum}  " \
+         "(+#{delta} to #{Monster::ATTRIBUTES[inc_idx]}, -#{delta} from #{Monster::ATTRIBUTES[dec_idx]})"
+  end
+end
+
+puts
+puts '  Now a monster with only 1 luck point (watch for clamping when luck is picked):'
+
+monster_b = Monster.from_genome([30, 25, 25, 19, 1])
+puts "  start:  #{monster_b.genome.inspect}  sum=#{monster_b.genome.sum}"
+
+3.times do |i|
+  before = monster_b.genome
+  monster_b = ga.mutate(monster_b)
+  after = monster_b.genome
+  diff = after.zip(before).map { |a, b| a - b }
+
+  if diff.all?(&:zero?)
+    puts "  step #{i + 1}: #{after.inspect}  sum=#{after.sum}  (no-op: decrease slot was 0)"
+  else
+    inc_idx = diff.index { |d| d.positive? }
+    dec_idx = diff.index { |d| d.negative? }
+    delta = diff[inc_idx]
+    puts "  step #{i + 1}: #{after.inspect}  sum=#{after.sum}  " \
+         "(+#{delta} to #{Monster::ATTRIBUTES[inc_idx]}, -#{delta} from #{Monster::ATTRIBUTES[dec_idx]})"
+  end
+end
+
+# 4. Full evolve loop ------------------------------------------------------
+header '4. Evolve: 10 monsters, 15 generations, fitness = speed*2 + luck'
+
+population = Population.new(size: 10)
+fitness_fn = ->(monsters) { monsters.each { |m| m.fitness = (m.speed * 2) + m.luck } }
+
+ga.evolve(population, generations: 15, &fitness_fn)
+
+puts '  gen  best  avg'
+population.history.each do |snap|
+  puts "  #{snap[:generation].to_s.rjust(3)}  #{snap[:best_fitness].to_s.rjust(4)}  #{snap[:avg_fitness].round(1).to_s.rjust(5)}"
+end
+
+puts
+puts '  winning monster:'
+puts population.best
