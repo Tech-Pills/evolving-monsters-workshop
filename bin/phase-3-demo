@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Phase 3 demo: see Race scoring in the console.
+# Run with: ./bin/phase-3-demo
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+require 'monster'
+require 'race'
+
+def header(title)
+  puts
+  puts "── #{title} #{'─' * [60 - title.length, 3].max}"
+  puts
+end
+
+# 1. Score breakdown for one monster across all 5 stages -------------------
+header '1. Score breakdown: one monster across all 5 stages'
+
+monster = Monster.from_genome([40, 30, 15, 10, 5])
+monster.name = 'Sprinter'
+attrs = monster.to_h
+
+puts "  monster: #{monster.name}  #{monster.genome.inspect}"
+puts "  formula per stage:  primary*#{Race::PRIMARY_WEIGHT} + secondary*#{Race::SECONDARY_WEIGHT} + luck*#{Race::LUCK_WEIGHT} + rand(#{Race::RANDOM_RANGE})"
+puts
+
+random = Random.new(42)
+total = 0.0
+
+Race::STAGES.each do |stage|
+  pri = attrs[stage[:primary]]
+  sec = attrs[stage[:secondary]]
+  luc = attrs[:luck]
+  rnd = random.rand(Race::RANDOM_RANGE)
+
+  score = (pri * Race::PRIMARY_WEIGHT) +
+          (sec * Race::SECONDARY_WEIGHT) +
+          (luc * Race::LUCK_WEIGHT) +
+          rnd
+  total += score
+
+  puts "  #{stage[:name].ljust(16)} (primary=#{stage[:primary]}, secondary=#{stage[:secondary]})"
+  puts "    #{pri}*#{Race::PRIMARY_WEIGHT} + #{sec}*#{Race::SECONDARY_WEIGHT} + #{luc}*#{Race::LUCK_WEIGHT} + #{rnd} (rand) = #{score.round(2)}"
+end
+
+puts
+puts "  total score: #{total.round(2)}"
+
+# 2. One race with several distinct monsters -------------------------------
+header '2. One race: placement determines fitness'
+
+monsters = [
+  Monster.from_genome([80, 5, 5, 5, 5]).tap { |m| m.name = 'Sprinter' },
+  Monster.from_genome([5, 80, 5, 5, 5]).tap { |m| m.name = 'Tank' },
+  Monster.from_genome([5, 5, 80, 5, 5]).tap { |m| m.name = 'Marathoner' },
+  Monster.from_genome([5, 5, 5, 80, 5]).tap { |m| m.name = 'Sage' },
+  Monster.from_genome([5, 5, 5, 5, 80]).tap { |m| m.name = 'Trickster' }
+]
+
+race = Race.call(monsters, random: Random.new(7))
+
+stage_codes = Race::STAGES.map { |s| s[:name].split.first[0, 3] }
+puts "  place  monster       total   fitness   stages: #{stage_codes.join(' / ')}"
+
+race.results.each do |r|
+  stages = r[:stage_scores].map { |s| s.round.to_s.rjust(3) }.join(' / ')
+  puts "    #{r[:placement]}    #{r[:monster].name.ljust(13)} #{r[:total_score].round(1).to_s.rjust(6)}   #{r[:monster].fitness.to_s.rjust(2)}      #{stages}"
+end
+
+puts
+puts '  Notice: fitness is assigned by placement (1st = highest, last = lowest).'
+puts '  This is what the GA will use to evolve the population in phase 5.'
