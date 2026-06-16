@@ -89,6 +89,7 @@ class Monster
 
   private
 
+  # Simple Random Partition
   def self.random_genome
     # Build a random genome: an array of integers (one per attribute) that sums to BUDGET
     # Repeated calls should produce different distributions
