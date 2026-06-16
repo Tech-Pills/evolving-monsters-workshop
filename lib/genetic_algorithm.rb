@@ -20,6 +20,7 @@ class GeneticAlgorithm
     validate_params!
   end
 
+  # Tournament Selection
   def select(population)
     population.monsters.sample(tournament_size).max_by(&:fitness)
   end
@@ -36,6 +37,7 @@ class GeneticAlgorithm
     ]
   end
 
+  # Swap/insertion mutation
   def mutate(monster)
     genome = monster.genome.dup
     indices = (0...genome.length).to_a.sample(2)
