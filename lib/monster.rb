@@ -89,6 +89,7 @@ class Monster
 
   private
 
+  # Simple Random Partition
   def self.random_genome
     buckets = Array.new(ATTRIBUTES.length, 0)
     BUDGET.times { buckets[rand(ATTRIBUTES.length)] += 1 }
