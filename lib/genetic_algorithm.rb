@@ -115,15 +115,25 @@ class GeneticAlgorithm
   end
 
   def crossover_two_point(genome_a, genome_b)
-    # Two random cut positions, sorted. Swap the middle slice — child1 ends
-    # up with A's outer regions and B's middle; child2 is the opposite.
-    # Return [child1, child2] as raw arrays.
-    # Hint: (1...genome_a.length).to_a.sample(2).sort gets two ordered cuts.
+    points = (1...genome_a.length).to_a.sample(2).sort
+    cut1, cut2 = points
+    child1 = genome_a[0...cut1] + genome_b[cut1...cut2] + genome_a[cut2..]
+    child2 = genome_b[0...cut1] + genome_a[cut1...cut2] + genome_b[cut2..]
+    [child1, child2]
   end
 
   def crossover_uniform(genome_a, genome_b)
-    # For each gene position, flip a coin. Heads, child1 takes A's gene and
-    # child2 takes B's. Tails, swap. Return [child1, child2] as raw arrays.
-    # Hint: genome_a.zip(genome_b) walks both genomes in parallel.
+    child1 = []
+    child2 = []
+    genome_a.zip(genome_b).each do |gene_a, gene_b|
+      if rand < 0.5
+        child1 << gene_a
+        child2 << gene_b
+      else
+        child1 << gene_b
+        child2 << gene_a
+      end
+    end
+    [child1, child2]
   end
 end
