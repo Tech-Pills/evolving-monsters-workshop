@@ -18,30 +18,33 @@ class Population
   end
 
   def best
-    # Return the monster with the highest fitness
+    monsters.max_by(&:fitness)
   end
 
   def worst
-    # Return the monster (not the fitness value) with the lowest fitness
+    monsters.min_by(&:fitness)
   end
 
   def average_fitness
-    # Return the mean fitness across all monsters as a float
-    # Edge case: an empty population should return 0.0 (avoid divide-by-zero)
+    return 0.0 if monsters.empty?
+
+    monsters.sum(&:fitness).to_f / monsters.length
   end
 
   def attribute_averages
-    # Return a hash mapping each ATTRIBUTES key to the population's average value
-    # for that attribute, e.g. { speed: 24.5, strength: 30.0, ... }
-    # Edge case: an empty population should return {}
+    return {} if monsters.empty?
+
+    Monster::ATTRIBUTES.to_h do |attr|
+      [attr, monsters.sum { |m| m.to_h[attr] }.to_f / monsters.length]
+    end
   end
 
   def replace(new_monsters)
-    # Replace @monsters with new_monsters, advance the generation counter,
-    # then record a snapshot of the new state to history
-    # Order matters: update monsters and bump the generation BEFORE calling
-    # record_snapshot, since the snapshot reads the current state
-    # Raise ArgumentError if new_monsters is empty
+    raise ArgumentError, 'Cannot replace with an empty population' if new_monsters.empty?
+
+    @monsters = new_monsters
+    @generation += 1
+    record_snapshot
   end
 
   def record_snapshot
