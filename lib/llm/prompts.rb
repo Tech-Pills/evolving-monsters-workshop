@@ -85,6 +85,43 @@ module LLM
       PROMPT
     end
 
+    def summary_user(history, drift, config_line)
+      first = history.first
+      last = history.last
+      generations = last[:generation] - first[:generation]
+      diversity_traj = downsample(history.map { |h| h[:diversity]&.round(2) }.compact)
+
+      drift_lines = drift.map do |row|
+        "  #{row[:attribute]}: #{row[:start].round(1)} -> #{row[:finish].round(1)} (#{format('%+.1f', row[:delta])})"
+      end.join("\n")
+
+      <<~PROMPT.strip
+        Analyze a #{generations}-generation GA run on a 5-attribute monster population
+        (100-point budget per monster, fitness = race placement across 5 stages).
+
+        Configuration: #{config_line}
+
+        Genome diversity per generation: #{diversity_traj.join(', ')}
+
+        Attribute drift across the run (start -> finish):
+        #{drift_lines}
+
+        Describe what happened in 3-4 sentences using GA vocabulary like
+        convergence, diversity collapse, archetype emergence, plateau, drift.
+        You may explain the causal relationship between the configuration and
+        the observed behavior (e.g., "tight selection pressure produced rapid
+        convergence"). Do NOT recommend specific parameter values or suggest
+        what to try next — that is left to the reader.
+      PROMPT
+    end
+
+    def downsample(values, max_points: 50)
+      return values if values.length <= max_points
+
+      step = (values.length.to_f / max_points).ceil
+      ([values.first] + values.each_slice(step).map(&:first) + [values.last]).uniq
+    end
+
     def parse_identity(raw)
       data = JSON.parse(raw)
       REQUIRED_IDENTITY_KEYS.to_h { |k| [k, data.fetch(k.to_s).to_s] }

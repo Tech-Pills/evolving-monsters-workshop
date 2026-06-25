@@ -76,7 +76,35 @@ module LLM
       "Across #{generations} generation#{'s' if generations != 1} the population shifted: #{drift}."
     end
 
+    def summarize_run(history:, drift:, config_summary:)
+      return 'No generations recorded.' if history.empty?
+
+      first = history.first
+      last = history.last
+      generations = last[:generation] - first[:generation]
+      diversity_arc = describe_diversity(first[:diversity], last[:diversity])
+      largest = drift.max_by { |d| d[:delta].abs }
+      strong_drift = drift.count { |d| d[:delta].abs >= 3 }
+
+      parts = []
+      parts << "Across #{generations} generations diversity #{diversity_arc}."
+      parts << "Largest attribute drift: #{largest[:attribute]} #{format('%+.1f', largest[:delta])}." if largest
+      parts << "#{strong_drift} of 5 attributes drifted by more than 3 points." if strong_drift.positive?
+      parts.join(' ')
+    end
+
     private
+
+    def describe_diversity(first, last)
+      return 'data unavailable' unless first && last && first.positive?
+
+      ratio = last.to_f / first
+      if ratio < 0.2 then 'collapsed sharply'
+      elsif ratio < 0.6 then 'declined steadily'
+      elsif ratio < 1.0 then 'shifted modestly'
+      else 'stayed stable'
+      end
+    end
 
     def label(monster)
       monster.name.to_s.empty? ? "Monster #{monster.dominant_attribute}" : monster.name

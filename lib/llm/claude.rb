@@ -32,6 +32,10 @@ module LLM
       call(LLM::Prompts.evolution_user(history), max_tokens: TEXT_MAX_TOKENS).strip
     end
 
+    def summarize_run(history:, drift:, config_summary:)
+      call(LLM::Prompts.summary_user(history, drift, config_summary), max_tokens: TEXT_MAX_TOKENS).strip
+    end
+
     private
 
     def call(user_content, max_tokens:, output_config: nil)

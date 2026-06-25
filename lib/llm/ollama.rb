@@ -39,6 +39,10 @@ module LLM
       call(LLM::Prompts.evolution_user(history)).strip
     end
 
+    def summarize_run(history:, drift:, config_summary:)
+      call(LLM::Prompts.summary_user(history, drift, config_summary)).strip
+    end
+
     private
 
     def call(user_content, format: nil)
