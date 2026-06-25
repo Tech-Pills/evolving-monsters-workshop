@@ -57,11 +57,13 @@ class Race
 
   # Linear Ranking
   def assign_fitness_by_rank(ranked)
-    # `ranked` is sorted best-first. Set each monster.fitness based on
-    # placement: 1st gets `monsters.length`, last gets 1. That side-effect
-    # is what plugs Race into GA#evolve. Return result hashes with keys
-    # monster, stage_scores, total_score, placement.
-    # Hint: each_with_index gives 0-based rank; placement = rank + 1.
+    # Returns:     Array of hashes with keys {monster, stage_scores, total_score, placement}
+    # Constraints: also sets monster.fitness as a side effect (1st place gets monsters.length,
+    #              last place gets 1); `ranked` is already sorted best-first, do not re-sort it
+    # Example:     for 3 monsters in `ranked`, the returned hashes have placement values 1, 2, 3
+    #              and the monsters end up with fitness 3, 2, 1 respectively
+    # Hint:        each_with_index gives 0-based rank; placement = rank + 1;
+    #              fitness = monsters.length - placement + 1
   end
 
   def score_stage(monster, stage)
