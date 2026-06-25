@@ -91,9 +91,12 @@ class Monster
 
   # Simple Random Partition
   def self.random_genome
-    # Build a random genome: an array of integers (one per attribute) that sums to BUDGET
-    # Repeated calls should produce different distributions
-    # Hint: think of BUDGET as a pile of points to drop into random buckets
+    # Returns:     Array of 5 Integers (one per ATTRIBUTES entry)
+    # Constraints: each element is zero or greater, and the values together
+    #              must sum to BUDGET (100)
+    # Example:     [22, 18, 25, 17, 18]  (sum: 100, length: 5)
+    # Hint:        imagine dropping 100 points into 5 random buckets, one at a time.
+    #              Repeated calls should produce different distributions.
   end
 
   private_class_method :random_genome
