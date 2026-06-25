@@ -22,9 +22,11 @@ class GeneticAlgorithm
 
   # Tournament Selection
   def select(population)
-    # Tournament selection: grab `tournament_size` monsters at random and
-    # return the fittest one.
-    # Hint: Array#sample(n) draws n distinct elements.
+    # Returns:     a single Monster (the fittest one out of a random sample of `tournament_size` monsters)
+    # Constraints: the input population is not modified; selection is random but biased toward fitness
+    # Example:     for a population with fitnesses [10, 20, 30, 40, 50, 60] and tournament_size=3,
+    #              select(pop) might pick the subset [20, 40, 60] and return the Monster with fitness=60
+    # Hint:        Array#sample(n) draws n distinct elements. Then pick the one with the highest fitness.
   end
 
   def crossover(parent_a, parent_b)
@@ -41,12 +43,13 @@ class GeneticAlgorithm
 
   # Swap/insertion mutation
   def mutate(monster)
-    # Swap mutation: pick two different attribute indices, then move some
-    # points from one to the other. The genome still sums to 100 because
-    # the gain on one side cancels the loss on the other — no normalization
-    # needed. Cap the transfer so the source slot can't go negative.
-    # Return a new Monster; leave the input alone.
-    # Hint: (0...genome.length).to_a.sample(2) gives two different indices.
+    # Returns:     a new Monster with two genome positions adjusted; the genome still sums to 100
+    # Constraints: pick two different indices; move some points from one to the other;
+    #              the source slot must not go below zero; do not modify the input monster
+    # Example:     input  [20, 20, 20, 20, 20]
+    #              output [20, 25, 20, 15, 20]  (index 1 gained 5 from index 3)
+    # Hint:        (0...genome.length).to_a.sample(2) gives two different indices.
+    #              Cap the transfer with [delta, source_value].min so the source can't go negative.
   end
 
   def evolve(population, generations:, &fitness_fn)
