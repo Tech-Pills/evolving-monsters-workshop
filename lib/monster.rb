@@ -21,6 +21,24 @@ class Monster
     from_genome(genome)
   end
 
+  # Build a hybrid name from two parent names. Tries to split on " the " and
+  # combine first half of parent A with second half of parent B. Falls back to
+  # first-word + last-word when the " the " pattern is missing.
+  def self.combine_names(name_a, name_b)
+    return name_a if name_b.nil? || name_b.to_s.empty?
+    return name_b if name_a.nil? || name_a.to_s.empty?
+    return name_a if name_a == name_b
+
+    parts_a = name_a.to_s.split(' the ', 2)
+    parts_b = name_b.to_s.split(' the ', 2)
+
+    if parts_a.length == 2 && parts_b.length == 2
+      "#{parts_a[0]} the #{parts_b[1]}"
+    else
+      "#{name_a.to_s.split.first} #{name_b.to_s.split.last}"
+    end
+  end
+
   def self.from_genome(genome)
     unless genome.length == ATTRIBUTES.length
       raise ArgumentError, "Genome must have exactly #{ATTRIBUTES.length} elements, got #{genome.length}"

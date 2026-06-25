@@ -34,10 +34,11 @@ class GeneticAlgorithm
 
     raw_child1, raw_child2 = send(:"crossover_#{crossover_strategy}", genome_a, genome_b)
 
-    [
-      Monster.from_genome(Monster.normalize_genome(raw_child1)),
-      Monster.from_genome(Monster.normalize_genome(raw_child2))
-    ]
+    child1 = Monster.from_genome(Monster.normalize_genome(raw_child1))
+    child2 = Monster.from_genome(Monster.normalize_genome(raw_child2))
+    child1.name = Monster.combine_names(parent_a.name, parent_b.name)
+    child2.name = Monster.combine_names(parent_b.name, parent_a.name)
+    [child1, child2]
   end
 
   # Swap/insertion mutation
@@ -52,7 +53,9 @@ class GeneticAlgorithm
     genome[increase_idx] += delta
     genome[decrease_idx] -= delta
 
-    Monster.from_genome(genome)
+    child = Monster.from_genome(genome)
+    child.name = monster.name
+    child
   end
 
   def evolve(population, generations:, on_generation: nil, &fitness_fn)
@@ -72,7 +75,9 @@ class GeneticAlgorithm
                      parent_b = select(population)
                      crossover(parent_a, parent_b)
                    else
-                     [Monster.from_genome(parent_a.genome)]
+                     clone = Monster.from_genome(parent_a.genome)
+                     clone.name = parent_a.name
+                     [clone]
                    end
 
         children.each do |child|
