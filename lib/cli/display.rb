@@ -3,6 +3,7 @@
 require 'pastel'
 require 'tty-box'
 require 'tty-progressbar'
+require 'tty-screen'
 require 'tty-spinner'
 require 'tty-table'
 
@@ -50,9 +51,15 @@ module CLI
       output.puts table.render(:unicode, padding: [0, 1])
     end
 
-    def leaderboard(race_results, limit: 10)
+    def population_averages(population)
+      parts = population.attribute_averages.map { |attr, avg| "#{attr}=#{avg.round(1)}" }
+      output.puts pastel.dim("  attribute averages: #{parts.join('  ')}")
+    end
+
+    def leaderboard(race_results, limit: nil)
       header = ['#', 'Name', 'Speed', 'Str', 'Sta', 'Int', 'Lck', 'Score', 'Fitness']
-      rows = race_results.first(limit).map do |r|
+      shown = limit ? race_results.first(limit) : race_results
+      rows = shown.map do |r|
         m = r[:monster]
         [
           r[:placement],
@@ -153,14 +160,27 @@ module CLI
       output.puts "  Archetype: #{pastel.cyan.bold(label)}#{tag}"
     end
 
+    def identity_summary(monster)
+      output.puts pastel.cyan.bold("  → #{monster.name}")
+      details = []
+      details << "\"#{monster.battle_cry}\"" if monster.battle_cry && !monster.battle_cry.empty?
+      details << "special: #{monster.special_ability}" if monster.special_ability && !monster.special_ability.empty?
+      output.puts pastel.dim("    #{details.join(' · ')}") unless details.empty?
+    end
+
     def narration_box(title, body)
-      framed = TTY::Box.frame(
-        body.to_s.strip,
-        padding: [0, 1],
-        title: { top_left: " #{title} " },
-        border: :light
-      )
-      output.puts framed
+      width = [TTY::Screen.width, 80].min
+      rule_length = [width - title.length - 6, 3].max
+      output.puts
+      output.puts pastel.dim("─── #{title} #{'─' * rule_length}")
+      output.puts
+
+      wrap_width = width - 4
+      body.to_s.strip.each_line do |paragraph|
+        paragraph.strip.scan(/.{1,#{wrap_width}}(?:\s+|$)|\S+/).each do |line|
+          output.puts "  #{line.strip}"
+        end
+      end
     end
 
     def closing(message)

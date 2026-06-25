@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
+require 'set'
 require_relative '../llm'
 require_relative '../monster'
 require_relative '../population'
 require_relative '../genetic_algorithm'
 require_relative '../race'
 require_relative 'display'
+require_relative 'emergence'
 
 module CLI
   class Runner
@@ -28,6 +30,7 @@ module CLI
       name_population(population)
 
       display.banner('Generation 0 — initial race', color: :yellow)
+      display.population_averages(population)
       gen_zero = run_race(population.monsters)
       display.leaderboard(gen_zero.results)
 
@@ -40,6 +43,16 @@ module CLI
       display.banner('Evolutionary arc', color: :blue)
       narration = adapter.narrate_evolution(population.history)
       display.narration_box('Narration', narration)
+
+      display.banner('Post-mortem', color: :cyan)
+      summary = display.with_spinner('analyzing the run') do
+        adapter.summarize_run(
+          history: population.history,
+          drift: Emergence.drift_table(population.history),
+          config_summary: config_summary_line
+        )
+      end
+      display.narration_box('Summary', summary)
 
       display.closing('Run complete.')
       population
@@ -62,15 +75,26 @@ module CLI
 
     def name_population(population)
       display.banner("Naming #{population.size} monsters", color: :cyan)
+      used_names = Set.new
       population.monsters.each_with_index do |monster, i|
         identity = display.with_spinner("[#{i + 1}/#{population.size}] generating identity") do
-          adapter.generate_identity(monster)
+          unique_identity(monster, used_names)
         end
         monster.name = identity[:name]
         monster.backstory = identity[:backstory]
         monster.battle_cry = identity[:battle_cry]
         monster.special_ability = identity[:special_ability]
+        used_names << identity[:name]
+        display.identity_summary(monster)
       end
+    end
+
+    def unique_identity(monster, used_names, max_attempts: 3)
+      max_attempts.times do
+        identity = adapter.generate_identity(monster)
+        return identity unless used_names.include?(identity[:name])
+      end
+      adapter.generate_identity(monster)
     end
 
     def run_race(monsters)
@@ -116,6 +140,12 @@ module CLI
       display.drift_table(population.history)
       display.diversity_sparkline(population.history)
       display.archetype_line(population.history)
+    end
+
+    def config_summary_line
+      "population=#{config.population_size}, generations=#{config.generations}, " \
+        "tournament=#{config.tournament_size}, crossover=#{config.crossover_strategy}, " \
+        "mutation_rate=#{config.mutation_rate}, elitism=#{config.elitism}"
     end
   end
 end
